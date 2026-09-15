@@ -1,6 +1,6 @@
 # Dorm_Dash
 # DormDash
-
+https://fluffy-chimera-a7c674.netlify.app/ 
 **A room-cleaning request app for VIT Vellore hostels — built for the Forge AI Hackathon.**
 
 DormDash replaces the informal "text the hostel WhatsApp group and hope someone reads it" process with a proper two-portal system, and solves a language-barrier problem along the way: most students at VIT-V are North Indian and write in English, while most housekeeping staff are Tamil-speaking. DormDash automatically translates every request so instructions actually reach staff in the language they read comfortably.
