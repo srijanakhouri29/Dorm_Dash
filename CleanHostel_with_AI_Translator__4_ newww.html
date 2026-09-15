@@ -1,0 +1,901 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CleanHostel — VIT-V room cleaning requests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<style>
+  :root{
+    --bg:#F2F4F1;
+    --card:#FFFFFF;
+    --ink:#16292B;
+    --ink-soft:#5C6D6A;
+    --ink-faint:#8A9997;
+    --border:#E1E7E3;
+    --accent:#2F6F5E;
+    --accent-dark:#1F4D40;
+    --accent-bg:#E4EEEA;
+    --amber:#C97A2B;
+    --amber-bg:#FBEEDF;
+    --clay:#B4472E;
+    --clay-bg:#F7E7E2;
+    --device-w:390px;
+    --page-bg:#E7E9E4;
+    --device-border:#12201E;
+  }
+  body[data-theme="dark"]{
+    --bg:#141F1D;
+    --card:#1C2825;
+    --ink:#EAF1EE;
+    --ink-soft:#9CB0AB;
+    --ink-faint:#6C817C;
+    --border:#2A3936;
+    --accent:#3FAE8F;
+    --accent-dark:#2F6F5E;
+    --accent-bg:#1E3531;
+    --amber:#E3A15C;
+    --amber-bg:#33291A;
+    --clay:#E0876B;
+    --clay-bg:#3A2420;
+    --page-bg:#0B1211;
+    --device-border:#05100D;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--page-bg); color:var(--ink);
+    font-family:'IBM Plex Sans', system-ui, sans-serif;
+    min-height:100vh; display:flex; justify-content:center; align-items:flex-start;
+    padding:32px 12px;
+    transition:background .25s;
+  }
+  .device{
+    width:var(--device-w); background:var(--bg); border-radius:38px;
+    box-shadow:0 30px 60px rgba(20,40,35,0.18), 0 2px 6px rgba(20,40,35,0.08);
+    overflow:hidden; position:relative; border:8px solid var(--device-border);
+    height:800px; display:flex; flex-direction:column;
+    transition:background .25s, border-color .25s;
+  }
+  .statusbar{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:12px 26px 4px; font-size:13px; font-weight:600; color:var(--ink); flex-shrink:0;
+  }
+  .statusbar .icons{display:flex; gap:5px; align-items:center; font-size:14px;}
+  .content{flex:1; overflow-y:auto; padding:6px 18px 100px; position:relative;}
+  .content::-webkit-scrollbar{display:none;}
+
+  header.appbar{padding:10px 2px 16px; display:flex; align-items:center; gap:10px;}
+  .logo{
+    width:38px; height:38px; border-radius:11px; background:var(--accent);
+    display:flex; align-items:center; justify-content:center; color:#fff; font-size:19px; flex-shrink:0;
+  }
+  .appbar h1{font-size:17px; font-weight:600; margin:0;}
+  .appbar p{font-size:12px; color:var(--ink-soft); margin:1px 0 0;}
+
+  .segment{
+    display:flex; background:#E4E7E2; border-radius:10px; padding:3px; margin-bottom:18px; position:relative;
+  }
+  .segment button{
+    flex:1; border:none; background:none; padding:9px 4px; font-family:inherit; font-size:13.5px;
+    font-weight:500; color:var(--ink-soft); border-radius:8px; cursor:pointer; position:relative; z-index:1;
+    transition:color .2s;
+  }
+  .segment button.active{color:var(--ink);}
+  .segment .thumb{
+    position:absolute; top:3px; bottom:3px; left:3px; width:calc(50% - 3px);
+    background:#fff; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.12);
+    transition:transform .25s cubic-bezier(.4,0,.2,1);
+  }
+  .segment.staff .thumb{transform:translateX(100%);}
+
+  section{display:none;}
+  section.active{display:block;}
+
+  .listhead{display:flex; justify-content:space-between; align-items:center; margin:4px 0 12px;}
+  .listhead h2{font-size:16px; font-weight:600; margin:0;}
+  .count-pill{font-size:11.5px; color:var(--ink-soft); background:var(--border); padding:2px 9px; border-radius:20px;}
+
+  .chips{display:flex; gap:7px; overflow-x:auto; margin-bottom:14px; padding-bottom:2px;}
+  .chips::-webkit-scrollbar{display:none;}
+  .chip{
+    flex-shrink:0; font-size:12.5px; padding:7px 13px; border-radius:20px; border:1px solid var(--border);
+    background:var(--card); color:var(--ink-soft); cursor:pointer; font-family:inherit; white-space:nowrap;
+  }
+  .chip.active{background:var(--accent); border-color:var(--accent); color:#fff;}
+
+  .card{
+    background:var(--card); border-radius:14px; padding:14px; margin-bottom:11px;
+    box-shadow:0 1px 2px rgba(20,40,35,0.05); border-left:4px solid var(--border);
+  }
+  .card.st-pending{border-left-color:var(--amber);}
+  .card.st-progress{border-left-color:var(--accent);}
+  .card.st-done{border-left-color:var(--ink-faint);}
+
+  .card-top{display:flex; gap:10px; align-items:flex-start;}
+  .avatar{
+    width:38px; height:38px; border-radius:10px; background:var(--accent-bg); color:var(--accent-dark);
+    display:flex; align-items:center; justify-content:center; font-size:12.5px; font-weight:600; flex-shrink:0;
+  }
+  .card-info{flex:1; min-width:0;}
+  .room{font-size:14.5px; font-weight:600;}
+  .meta{font-size:12px; color:var(--ink-soft); margin-top:1px;}
+  .status{
+    display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:500;
+    padding:4px 9px; border-radius:20px; white-space:nowrap; flex-shrink:0;
+  }
+  .status .dot{width:6px; height:6px; border-radius:50%;}
+  .status.pending{background:var(--amber-bg); color:var(--amber);}
+  .status.pending .dot{background:var(--amber);}
+  .status.progress{background:var(--accent-bg); color:var(--accent-dark);}
+  .status.progress .dot{background:var(--accent);}
+  .status.done{background:#EEF0EE; color:var(--ink-faint);}
+  .status.done .dot{background:var(--ink-faint);}
+
+  .note-ta{
+    font-family:'Noto Sans Tamil','IBM Plex Sans',sans-serif; font-size:14.5px; line-height:1.5;
+    margin:10px 0 4px; padding:9px 10px; background:var(--bg); border-radius:9px;
+  }
+  .note-en-toggle{font-size:11.5px; color:var(--accent-dark); cursor:pointer; display:inline-flex; align-items:center; gap:3px; margin-top:2px;}
+  .note-en{font-size:12px; color:var(--ink-soft); margin-top:5px; display:none; padding:0 2px;}
+  .note-en.show{display:block;}
+  .translating{font-size:12px; color:var(--ink-faint); font-style:italic;}
+
+  .card-actions{display:flex; gap:8px; margin-top:11px;}
+  .btn{
+    padding:9px 14px; background:var(--accent); color:#fff; border:none;
+    border-radius:9px; font-size:13px; font-weight:500; font-family:inherit; cursor:pointer;
+    display:inline-flex; align-items:center; gap:6px;
+  }
+  .btn:hover{background:var(--accent-dark);}
+  .btn.ghost{background:var(--bg); color:var(--ink-faint); cursor:default;}
+  .btn.full{width:100%; justify-content:center; padding:12px;}
+
+  .empty{text-align:center; padding:50px 20px; color:var(--ink-soft);}
+  .empty i{font-size:34px; color:var(--ink-faint); margin-bottom:10px; display:block;}
+  .empty p{font-size:13px; margin:0;}
+
+  .fab{
+    position:absolute; right:20px; bottom:26px; width:54px; height:54px; border-radius:50%;
+    background:var(--accent); color:#fff; border:none; font-size:23px; cursor:pointer;
+    box-shadow:0 8px 18px rgba(47,111,94,0.4); display:flex; align-items:center; justify-content:center;
+    z-index:5;
+  }
+  .fab:hover{background:var(--accent-dark);}
+
+  .sheet-overlay{
+    position:absolute; inset:0; background:rgba(15,30,27,0.4); opacity:0; pointer-events:none;
+    transition:opacity .25s; z-index:10;
+  }
+  .sheet-overlay.open{opacity:1; pointer-events:auto;}
+  .sheet{
+    position:absolute; left:0; right:0; bottom:0; background:var(--card);
+    border-radius:22px 22px 0 0; padding:8px 20px 24px; transform:translateY(100%);
+    transition:transform .3s cubic-bezier(.32,.72,0,1); z-index:11; max-height:88%; overflow-y:auto;
+  }
+  .sheet.open{transform:translateY(0);}
+  .sheet-handle{width:36px; height:4px; background:var(--border); border-radius:3px; margin:6px auto 14px;}
+  .sheet-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;}
+  .sheet-head h3{font-size:16px; font-weight:600; margin:0;}
+  .sheet-close{background:var(--bg); border:none; width:30px; height:30px; border-radius:50%; color:var(--ink-soft); cursor:pointer; font-size:15px;}
+
+  .field{margin-bottom:14px;}
+  label{display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink-soft); margin-bottom:6px; font-weight:500;}
+  label i{font-size:14px;}
+  input, select, textarea{
+    width:100%; padding:11px 12px; border:1px solid var(--border); border-radius:9px;
+    font-family:inherit; font-size:14.5px; background:var(--bg); color:var(--ink);
+  }
+  textarea{min-height:66px; resize:vertical;}
+  input:focus, select:focus, textarea:focus{outline:none; border-color:var(--accent); background:#fff;}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .err{color:var(--clay); font-size:12px; margin:-8px 0 12px;}
+
+  .appbar{position:relative;}
+  .iconbtn{
+    margin-left:auto; width:38px; height:38px; border-radius:11px; border:1px solid var(--border);
+    background:var(--card); color:var(--accent-dark); font-size:16px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .iconbtn:hover{background:var(--accent-bg);}
+
+  .lang-pill{
+    font-size:11px; color:var(--ink-faint); border:1px solid var(--border); padding:2px 8px;
+    border-radius:20px; white-space:nowrap; flex-shrink:0;
+  }
+  .note-en-toggle{border:none; background:none; font-family:inherit; padding:0;}
+
+  .translate-out{
+    margin-top:4px; padding:11px 12px; border-radius:9px; background:var(--bg);
+    font-family:'Noto Sans Tamil','IBM Plex Sans',sans-serif; font-size:14.5px; line-height:1.5;
+    min-height:20px;
+  }
+  .translate-out.empty{color:var(--ink-faint); font-style:italic; font-family:'IBM Plex Sans',sans-serif; font-size:13px;}
+  .translate-out.err{color:var(--clay); font-family:'IBM Plex Sans',sans-serif; font-size:13px; font-style:normal;}
+  .swap-row{display:flex; align-items:center; gap:8px;}
+  .swap-row .field{flex:1; margin-bottom:0;}
+  .swap-btn{
+    width:34px; height:34px; border-radius:50%; border:1px solid var(--border); background:var(--bg);
+    color:var(--accent-dark); flex-shrink:0; margin-top:18px; cursor:pointer; font-size:14px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .swap-btn:hover{background:var(--accent-bg);}
+  .copy-row{display:flex; justify-content:flex-end; margin-top:6px;}
+  .copy-link{font-size:11.5px; color:var(--accent-dark); background:none; border:none; font-family:inherit; cursor:pointer; display:inline-flex; align-items:center; gap:4px;}
+
+  .note-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:10px 0 4px;}
+  .note-cell{background:var(--bg); border-radius:9px; padding:8px 9px; min-width:0;}
+  .note-cell-label{font-size:10.5px; color:var(--ink-faint); font-weight:600; margin-bottom:4px;}
+  .note-cell-text{font-family:'Noto Sans Tamil','IBM Plex Sans',sans-serif; font-size:13px; line-height:1.45; word-wrap:break-word;}
+
+  /* ---- Login screen ---- */
+  .login-wrap{
+    min-height:calc(100vh - 40px); display:flex; flex-direction:column; justify-content:center;
+    padding:10px 2px 40px;
+  }
+  .login-logo{
+    width:52px; height:52px; border-radius:15px; background:var(--accent);
+    display:flex; align-items:center; justify-content:center; color:#fff; font-size:25px;
+    margin:0 auto 14px;
+  }
+  .login-title{text-align:center; font-size:19px; font-weight:600; margin:0 0 2px;}
+  .login-sub{text-align:center; font-size:12.5px; color:var(--ink-soft); margin:0 0 22px;}
+  .login-card{background:var(--card); border-radius:16px; padding:18px; box-shadow:0 1px 2px rgba(20,40,35,0.05);}
+  .login-error{color:var(--clay); font-size:12px; margin:-6px 0 12px; display:none;}
+  .login-hint{font-size:11.5px; color:var(--ink-faint); margin-top:-8px; margin-bottom:14px;}
+  .login-panel{display:none;}
+  .login-panel.active{display:block;}
+
+  .userbadge{
+    display:flex; align-items:center; gap:8px; font-size:12px; color:var(--ink-soft);
+    margin:0 8px 14px; padding:9px 11px; background:var(--card); border-radius:11px;
+  }
+  .userbadge .ub-avatar{
+    width:28px; height:28px; border-radius:8px; background:var(--accent-bg); color:var(--accent-dark);
+    display:flex; align-items:center; justify-content:center; font-size:11.5px; font-weight:600; flex-shrink:0;
+  }
+  .userbadge .ub-info{flex:1; min-width:0;}
+  .userbadge .ub-name{font-size:13px; font-weight:600; color:var(--ink);}
+  .userbadge .ub-role{font-size:11px; color:var(--ink-soft);}
+  .userbadge .ub-logout{
+    background:none; border:none; color:var(--ink-faint); font-size:16px; cursor:pointer;
+    width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .userbadge .ub-logout:hover{background:var(--bg); color:var(--clay);}
+</style>
+</head>
+<body>
+
+<div class="device">
+  <div class="statusbar">
+    <span id="clock">9:41</span>
+    <span class="icons"><i class="ti ti-antenna-bars-5"></i><i class="ti ti-wifi"></i><i class="ti ti-battery-4"></i></span>
+  </div>
+
+  <div class="content">
+
+    <div class="login-wrap" id="login-screen">
+      <div class="login-logo"><i class="ti ti-droplet"></i></div>
+      <h1 class="login-title">CleanHostel</h1>
+      <p class="login-sub">VIT-V hostel block services</p>
+
+      <div class="segment" id="login-segment">
+        <div class="thumb"></div>
+        <button id="login-tab-student" class="active" onclick="switchLoginTab('student')">Student login</button>
+        <button id="login-tab-staff" onclick="switchLoginTab('staff')">Staff login</button>
+      </div>
+
+      <div class="login-card">
+        <div class="login-panel active" id="login-panel-student">
+          <div class="field">
+            <label><i class="ti ti-id-badge-2"></i>Student ID (required)</label>
+            <input id="li-student-id" type="text" placeholder="e.g. 21BCE1234">
+          </div>
+          <div class="field">
+            <label><i class="ti ti-user"></i>Full name</label>
+            <input id="li-student-name" type="text" placeholder="e.g. Arjun Kumar">
+          </div>
+          <div class="field">
+            <label><i class="ti ti-door"></i>Room number</label>
+            <input id="li-student-room" type="text" placeholder="e.g. MH-204">
+          </div>
+          <div class="login-error" id="login-student-err">Please enter your Student ID to continue.</div>
+          <button class="btn full" onclick="loginAs('student')"><i class="ti ti-login"></i>Log in as student</button>
+        </div>
+
+        <div class="login-panel" id="login-panel-staff">
+          <div class="field">
+            <label><i class="ti ti-id-badge-2"></i>Staff ID</label>
+            <input id="li-staff-id" type="text" placeholder="e.g. STF-0042">
+          </div>
+          <div class="field">
+            <label><i class="ti ti-user"></i>Full name</label>
+            <input id="li-staff-name" type="text" placeholder="e.g. Meena R.">
+          </div>
+          <div class="field">
+            <label><i class="ti ti-lock"></i>Password</label>
+            <input id="li-staff-pass" type="password" placeholder="••••••••">
+          </div>
+          <div class="login-error" id="login-staff-err">Please enter your Staff ID and password.</div>
+          <button class="btn full" onclick="loginAs('staff')"><i class="ti ti-login"></i>Log in as staff</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="app-main" style="display:none;">
+
+    <header class="appbar">
+      <div class="logo"><i class="ti ti-droplet"></i></div>
+      <div>
+        <h1>CleanHostel</h1>
+        <p>VIT-V hostel block services</p>
+      </div>
+      <button class="iconbtn" onclick="toggleDarkMode()" title="Toggle dark mode"><i class="ti ti-moon" id="theme-icon"></i></button>
+      <button class="iconbtn" onclick="openTranslateSheet()" title="Translator"><i class="ti ti-language"></i></button>
+    </header>
+
+    <div class="userbadge" id="userbadge">
+      <div class="ub-avatar" id="ub-avatar">—</div>
+      <div class="ub-info">
+        <div class="ub-name" id="ub-name">—</div>
+        <div class="ub-role" id="ub-role">—</div>
+      </div>
+      <button class="ub-logout" onclick="logout()" title="Log out"><i class="ti ti-logout-2"></i></button>
+    </div>
+
+    <div class="segment" id="segment">
+      <div class="thumb"></div>
+      <button id="tab-student" class="active" onclick="switchTab('student')">Student</button>
+      <button id="tab-staff" onclick="switchTab('staff')">Staff</button>
+    </div>
+
+    <section id="student" class="active">
+      <div class="listhead">
+        <h2>My requests</h2>
+        <span class="count-pill" id="student-count">0</span>
+      </div>
+      <div id="student-list"></div>
+    </section>
+
+    <section id="staff">
+      <div class="listhead">
+        <h2>Assigned to you</h2>
+        <span class="count-pill" id="staff-count">0</span>
+      </div>
+      <div class="field" style="margin-bottom:12px;">
+        <label><i class="ti ti-language"></i>Show notes in</label>
+        <select id="staff-lang" onchange="setStaffLang(this.value)">
+          <option value="ta">Tamil</option>
+          <option value="en">English</option>
+          <option value="hi">Hindi</option>
+          <option value="te">Telugu</option>
+          <option value="ml">Malayalam</option>
+          <option value="kn">Kannada</option>
+        </select>
+      </div>
+      <div class="chips" id="staff-chips">
+        <button class="chip active" onclick="setFilter('all', this)">All blocks</button>
+        <button class="chip" onclick="setFilter(&quot;Men's Hostel A&quot;, this)">MH-A</button>
+        <button class="chip" onclick="setFilter(&quot;Men's Hostel B&quot;, this)">MH-B</button>
+        <button class="chip" onclick="setFilter(&quot;Ladies Hostel A&quot;, this)">LH-A</button>
+        <button class="chip" onclick="setFilter(&quot;Ladies Hostel B&quot;, this)">LH-B</button>
+      </div>
+      <div id="staff-list"></div>
+    </section>
+
+    <button class="fab" id="fab" onclick="openSheet()"><i class="ti ti-plus"></i></button>
+    </div><!-- /app-main -->
+  </div>
+
+  <div class="sheet-overlay" id="overlay" onclick="closeSheet()"></div>
+  <div class="sheet" id="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3>New cleaning request</h3>
+      <button class="sheet-close" onclick="closeSheet()"><i class="ti ti-x"></i></button>
+    </div>
+
+    <div class="field">
+      <label><i class="ti ti-door"></i>Room number</label>
+      <input id="s-room" type="text" placeholder="e.g. MH-204">
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label><i class="ti ti-building"></i>Block</label>
+        <select id="s-block">
+          <option>Men's Hostel A</option>
+          <option>Men's Hostel B</option>
+          <option>Ladies Hostel A</option>
+          <option>Ladies Hostel B</option>
+        </select>
+      </div>
+      <div class="field">
+        <label><i class="ti ti-clock"></i>Time</label>
+        <select id="s-time">
+          <option>Morning (8–10 AM)</option>
+          <option>Midday (12–2 PM)</option>
+          <option>Evening (5–7 PM)</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label><i class="ti ti-message"></i>Instructions</label>
+      <textarea id="s-note" placeholder="e.g. Please sweep and mop, dustbin needs emptying"></textarea>
+    </div>
+    <div class="field">
+      <label><i class="ti ti-abc"></i>You're writing in</label>
+      <select id="s-src-lang">
+        <option value="auto">Detect automatically</option>
+        <option value="en">English</option>
+        <option value="ta">Tamil</option>
+        <option value="hi">Hindi</option>
+        <option value="te">Telugu</option>
+        <option value="ml">Malayalam</option>
+        <option value="kn">Kannada</option>
+      </select>
+    </div>
+    <div class="err" id="s-err" style="display:none;">Please fill in your room number and instructions.</div>
+    <button class="btn full" onclick="submitRequest()"><i class="ti ti-send"></i>Send request</button>
+  </div>
+
+  <div class="sheet-overlay" id="t-overlay" onclick="closeTranslateSheet()"></div>
+  <div class="sheet" id="t-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h3>Translator</h3>
+      <button class="sheet-close" onclick="closeTranslateSheet()"><i class="ti ti-x"></i></button>
+    </div>
+
+    <div class="swap-row">
+      <div class="field">
+        <label><i class="ti ti-abc"></i>From</label>
+        <select id="t-from">
+          <option value="en">English</option>
+          <option value="ta">Tamil</option>
+          <option value="hi">Hindi</option>
+          <option value="te">Telugu</option>
+          <option value="ml">Malayalam</option>
+          <option value="kn">Kannada</option>
+        </select>
+      </div>
+      <button class="swap-btn" onclick="swapLangs()" title="Swap"><i class="ti ti-arrows-left-right"></i></button>
+      <div class="field">
+        <label><i class="ti ti-abc"></i>To</label>
+        <select id="t-to">
+          <option value="ta">Tamil</option>
+          <option value="en">English</option>
+          <option value="hi">Hindi</option>
+          <option value="te">Telugu</option>
+          <option value="ml">Malayalam</option>
+          <option value="kn">Kannada</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field" style="margin-top:14px;">
+      <label><i class="ti ti-message"></i>Text</label>
+      <textarea id="t-input" placeholder="Type a message to translate…"></textarea>
+    </div>
+
+    <button class="btn full" id="t-btn" onclick="runTranslateTool()"><i class="ti ti-language"></i>Translate</button>
+
+    <div class="field" style="margin-top:14px;">
+      <label><i class="ti ti-check"></i>Translation</label>
+      <div class="translate-out empty" id="t-output">Your translation will appear here.</div>
+      <div class="copy-row">
+        <button class="copy-link" id="t-copy" style="display:none;" onclick="copyTranslation()"><i class="ti ti-copy"></i>Copy</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let requests = [];
+  let nextId = 1;
+  let staffFilter = 'all';
+  let staffLang = 'ta';
+  let currentUser = null; // { role:'student'|'staff', id, name }
+
+  /* ---- Dark mode ---- */
+  function toggleDarkMode(){
+    const isDark = document.body.dataset.theme === 'dark';
+    document.body.dataset.theme = isDark ? '' : 'dark';
+    const icon = document.getElementById('theme-icon');
+    if(icon) icon.className = isDark ? 'ti ti-moon' : 'ti ti-sun';
+  }
+
+  /* ---- Login ---- */
+  function switchLoginTab(role){
+    document.getElementById('login-panel-student').classList.toggle('active', role==='student');
+    document.getElementById('login-panel-staff').classList.toggle('active', role==='staff');
+    document.getElementById('login-tab-student').classList.toggle('active', role==='student');
+    document.getElementById('login-tab-staff').classList.toggle('active', role==='staff');
+    document.getElementById('login-segment').classList.toggle('staff', role==='staff');
+  }
+
+  function loginAs(role){
+    if(role === 'student'){
+      const id = document.getElementById('li-student-id').value.trim();
+      const name = document.getElementById('li-student-name').value.trim();
+      const err = document.getElementById('login-student-err');
+      if(!id){ err.style.display = 'block'; return; }
+      err.style.display = 'none';
+      currentUser = { role:'student', id, name: name || 'Student' };
+    } else {
+      const id = document.getElementById('li-staff-id').value.trim();
+      const name = document.getElementById('li-staff-name').value.trim();
+      const pass = document.getElementById('li-staff-pass').value.trim();
+      const err = document.getElementById('login-staff-err');
+      if(!id || !pass){ err.style.display = 'block'; return; }
+      err.style.display = 'none';
+      currentUser = { role:'staff', id, name: name || 'Staff' };
+    }
+    enterApp();
+  }
+
+  function enterApp(){
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-main').style.display = 'block';
+
+    // Lock the app to the logged-in role — no switching between student/staff views.
+    document.getElementById('segment').style.display = 'none';
+    switchTab(currentUser.role);
+
+    document.getElementById('ub-avatar').textContent = (currentUser.name||'?').slice(0,2).toUpperCase();
+    document.getElementById('ub-name').textContent = currentUser.name;
+    document.getElementById('ub-role').textContent = currentUser.role === 'student'
+      ? `Student · ID ${currentUser.id}`
+      : `Staff · ID ${currentUser.id}`;
+  }
+
+  function logout(){
+    currentUser = null;
+    document.getElementById('app-main').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('li-student-id').value = '';
+    document.getElementById('li-student-name').value = '';
+    document.getElementById('li-student-room').value = '';
+    document.getElementById('li-staff-id').value = '';
+    document.getElementById('li-staff-name').value = '';
+    document.getElementById('li-staff-pass').value = '';
+    document.getElementById('login-student-err').style.display = 'none';
+    document.getElementById('login-staff-err').style.display = 'none';
+    switchLoginTab('student');
+  }
+
+  function tick(){
+    const d = new Date();
+    let h = d.getHours()%12; if(h===0) h=12;
+    const m = d.getMinutes().toString().padStart(2,'0');
+    document.getElementById('clock').textContent = `${h}:${m}`;
+  }
+  tick(); setInterval(tick, 15000);
+
+  function switchTab(name){
+    document.getElementById('student').classList.toggle('active', name==='student');
+    document.getElementById('staff').classList.toggle('active', name==='staff');
+    document.getElementById('tab-student').classList.toggle('active', name==='student');
+    document.getElementById('tab-staff').classList.toggle('active', name==='staff');
+    document.getElementById('segment').classList.toggle('staff', name==='staff');
+    document.getElementById('fab').style.display = name==='student' ? 'flex' : 'none';
+  }
+
+  function openSheet(){
+    document.getElementById('overlay').classList.add('open');
+    document.getElementById('sheet').classList.add('open');
+  }
+  function closeSheet(){
+    document.getElementById('overlay').classList.remove('open');
+    document.getElementById('sheet').classList.remove('open');
+  }
+
+  function setFilter(block, el){
+    staffFilter = block;
+    document.querySelectorAll('#staff-chips .chip').forEach(c=>c.classList.remove('active'));
+    el.classList.add('active');
+    renderStaff();
+  }
+
+  const LANGS = { en:'English', ta:'Tamil', hi:'Hindi', te:'Telugu', ml:'Malayalam', kn:'Kannada' };
+
+  const fallbackDict = {
+    "sweep": "பெருக்கு", "mop": "தரை துடை", "dustbin": "குப்பைத் தொட்டி",
+    "empty": "காலி செய்", "clean": "சுத்தம் செய்", "please": "தயவுசெய்து",
+    "bathroom": "குளியலறை", "window": "ஜன்னல்"
+  };
+
+  // AI translation agent — uses Claude to translate between any of the app's
+  // supported languages (including auto-detecting the source language).
+  // Falls back to MyMemory, then a tiny local dictionary, so a request can
+  // never get stuck if a translation step fails.
+  async function aiTranslate(text, fromName, toName){
+    const instruction = fromName
+      ? `Translate the following ${fromName} text into ${toName}.`
+      : `Detect the language of the following text, then translate it into ${toName}.`;
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        messages: [{
+          role: "user",
+          content: `${instruction} Reply with ONLY the translated text, no quotes, no notes, no explanation.\n\n${text}`
+        }]
+      })
+    });
+    const data = await res.json();
+    const out = (data.content || [])
+      .filter(b => b.type === "text")
+      .map(b => b.text)
+      .join("")
+      .trim();
+    if(!out) throw new Error("empty AI translation");
+    return out;
+  }
+
+  async function translateText(text, fromCode, toCode){
+    if(!text.trim()) return "";
+    if(fromCode === toCode && fromCode !== 'auto') return text;
+    const fromName = fromCode === 'auto' ? null : (LANGS[fromCode] || fromCode);
+    const toName = LANGS[toCode] || toCode;
+    try{
+      return await aiTranslate(text, fromName, toName);
+    }catch(e){
+      try{
+        const pairFrom = fromCode === 'auto' ? 'autodetect' : fromCode;
+        const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${pairFrom}|${toCode}`);
+        const data = await res.json();
+        if(data && data.responseData && data.responseData.translatedText){
+          return data.responseData.translatedText;
+        }
+        throw new Error("no translation");
+      }catch(e2){
+        if(toCode === 'ta'){
+          return text.split(" ").map(w=>{
+            const clean = w.toLowerCase().replace(/[.,!]/g,'');
+            return fallbackDict[clean] || w;
+          }).join(" ");
+        }
+        throw e2;
+      }
+    }
+  }
+
+  async function submitRequest(){
+    const room = document.getElementById('s-room').value.trim();
+    const block = document.getElementById('s-block').value;
+    const time = document.getElementById('s-time').value;
+    const note = document.getElementById('s-note').value.trim();
+    const sourceCode = document.getElementById('s-src-lang').value;
+    const err = document.getElementById('s-err');
+
+    if(!room || !note){ err.style.display = 'block'; return; }
+    err.style.display = 'none';
+
+    const req = {
+      id: nextId++, room, block, time,
+      noteOriginal: note, sourceCode,
+      translations: {}, _pending: new Set(),
+      status: "pending", created: new Date()
+    };
+    requests.unshift(req);
+    document.getElementById('s-room').value = '';
+    document.getElementById('s-note').value = '';
+    closeSheet();
+    renderStudent(); renderStaff();
+  }
+
+  function statusInfo(s){
+    if(s==='pending') return ['pending','Waiting'];
+    if(s==='progress') return ['progress','In progress'];
+    return ['done','Completed'];
+  }
+  function initials(room){ return room.replace(/[^A-Za-z0-9]/g,'').slice(0,3).toUpperCase() || '—'; }
+
+  function renderStudent(){
+    const el = document.getElementById('student-list');
+    document.getElementById('student-count').textContent = requests.length;
+    if(requests.length===0){
+      el.innerHTML = `<div class="empty"><i class="ti ti-sparkles"></i><p>No requests yet.<br>Tap + to book a room clean.</p></div>`;
+      return;
+    }
+    el.innerHTML = requests.map(r=>{
+      const [cls,label] = statusInfo(r.status);
+      return `
+      <div class="card st-${cls}">
+        <div class="card-top">
+          <div class="avatar">${initials(r.room)}</div>
+          <div class="card-info">
+            <div class="room">${r.room}</div>
+            <div class="meta">${r.block} · ${r.time}</div>
+          </div>
+          <span class="status ${cls}"><span class="dot"></span>${label}</span>
+        </div>
+        <div class="note-ta">${r.noteOriginal}</div>
+        ${r.sourceCode !== 'auto' ? `<span class="lang-pill" style="margin-top:8px; display:inline-block;">Written in ${LANGS[r.sourceCode]}</span>` : ''}
+      </div>`;
+    }).join('');
+  }
+
+  function setStaffLang(code){
+    staffLang = code;
+    renderStaff();
+  }
+
+  function ensureTranslation(req, targetCode){
+    if(req.sourceCode === targetCode) return; // already in the language staff wants
+    if(req.translations[targetCode] !== undefined) return; // done or in flight
+    req.translations[targetCode] = '…';
+    req._pending.add(targetCode);
+    translateText(req.noteOriginal, req.sourceCode, targetCode)
+      .then(result => { req.translations[targetCode] = result; })
+      .catch(() => { req.translations[targetCode] = req.noteOriginal; })
+      .finally(() => {
+        req._pending.delete(targetCode);
+        if(staffLang === targetCode) renderStaff();
+      });
+  }
+
+  function renderStaff(){
+    const el = document.getElementById('staff-list');
+    document.getElementById('staff-lang').value = staffLang;
+    const list = requests.filter(r => staffFilter==='all' || r.block===staffFilter);
+    document.getElementById('staff-count').textContent = list.filter(r=>r.status!=='done').length;
+    if(list.length===0){
+      el.innerHTML = `<div class="empty"><i class="ti ti-checklist"></i><p>Nothing here right now.</p></div>`;
+      return;
+    }
+    el.innerHTML = list.map(r=>{
+      const [cls,label] = statusInfo(r.status);
+      let action = '';
+      if(r.status==='pending') action = `<button class="btn" onclick="setStatus(${r.id},'progress')"><i class="ti ti-player-play"></i>Start</button>`;
+      else if(r.status==='progress') action = `<button class="btn" onclick="setStatus(${r.id},'done')"><i class="ti ti-check"></i>Mark completed</button>`;
+      else action = `<button class="btn ghost" disabled><i class="ti ti-check"></i>Completed</button>`;
+
+      const sameLang = r.sourceCode === staffLang;
+      let staffText;
+      if(sameLang){
+        staffText = r.noteOriginal;
+      }else{
+        ensureTranslation(r, staffLang);
+        const t = r.translations[staffLang];
+        staffText = (t === undefined || t === '…')
+          ? `<span class="translating">Translating…</span>`
+          : t;
+      }
+
+      const showEnglishCol = staffLang !== 'en';
+      let englishText = '';
+      if(showEnglishCol){
+        if(r.sourceCode === 'en'){
+          englishText = r.noteOriginal;
+        }else{
+          ensureTranslation(r, 'en');
+          const te = r.translations['en'];
+          englishText = (te === undefined || te === '…')
+            ? `<span class="translating">Translating…</span>`
+            : te;
+        }
+      }
+
+      const originalLabel = r.sourceCode === 'auto' ? 'original text' : `original (${LANGS[r.sourceCode]})`;
+      const showOriginalToggle = r.sourceCode !== 'auto' && r.sourceCode !== staffLang && r.sourceCode !== 'en';
+
+      const noteBlock = showEnglishCol
+        ? `
+        <div class="note-grid">
+          <div class="note-cell">
+            <div class="note-cell-label">${LANGS[staffLang]}</div>
+            <div class="note-cell-text">${staffText}</div>
+          </div>
+          <div class="note-cell">
+            <div class="note-cell-label">English</div>
+            <div class="note-cell-text">${englishText}</div>
+          </div>
+        </div>`
+        : `<div class="note-ta">${staffText}</div>`;
+
+      return `
+      <div class="card st-${cls}">
+        <div class="card-top">
+          <div class="avatar">${initials(r.room)}</div>
+          <div class="card-info">
+            <div class="room">${r.room}</div>
+            <div class="meta">${r.block} · ${r.time}</div>
+          </div>
+          <span class="status ${cls}"><span class="dot"></span>${label}</span>
+        </div>
+        ${noteBlock}
+        ${showOriginalToggle ? `
+        <button type="button" class="note-en-toggle" onclick="this.nextElementSibling.classList.toggle('show')">
+          <i class="ti ti-language"></i>Show ${originalLabel}
+        </button>
+        <div class="note-en">${r.noteOriginal}</div>` : ''}
+        <div class="card-actions">${action}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function setStatus(id, status){
+    const r = requests.find(x=>x.id===id);
+    if(r) r.status = status;
+    renderStudent(); renderStaff();
+  }
+
+  function openTranslateSheet(){
+    document.getElementById('t-overlay').classList.add('open');
+    document.getElementById('t-sheet').classList.add('open');
+  }
+  function closeTranslateSheet(){
+    document.getElementById('t-overlay').classList.remove('open');
+    document.getElementById('t-sheet').classList.remove('open');
+  }
+  function swapLangs(){
+    const from = document.getElementById('t-from');
+    const to = document.getElementById('t-to');
+    const tmp = from.value; from.value = to.value; to.value = tmp;
+  }
+
+  let lastTranslation = '';
+
+  async function runTranslateTool(){
+    const text = document.getElementById('t-input').value.trim();
+    const fromCode = document.getElementById('t-from').value;
+    const toCode = document.getElementById('t-to').value;
+    const out = document.getElementById('t-output');
+    const btn = document.getElementById('t-btn');
+    const copyBtn = document.getElementById('t-copy');
+
+    if(!text){
+      out.className = 'translate-out err';
+      out.textContent = 'Type something to translate first.';
+      copyBtn.style.display = 'none';
+      return;
+    }
+    if(fromCode === toCode){
+      out.className = 'translate-out err';
+      out.textContent = `From and to language are both ${LANGS[fromCode]} — pick two different languages.`;
+      copyBtn.style.display = 'none';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ti ti-loader-2"></i>Translating…';
+    out.className = 'translate-out empty';
+    out.textContent = 'Translating…';
+    copyBtn.style.display = 'none';
+
+    try{
+      const result = await translateText(text, fromCode, toCode);
+      lastTranslation = result;
+      out.className = 'translate-out';
+      out.textContent = result;
+      copyBtn.style.display = 'inline-flex';
+    }catch(e){
+      out.className = 'translate-out err';
+      out.textContent = "Couldn't translate that just now — please try again.";
+    }finally{
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ti ti-language"></i>Translate';
+    }
+  }
+
+  function copyTranslation(){
+    if(!lastTranslation) return;
+    navigator.clipboard.writeText(lastTranslation).then(()=>{
+      const copyBtn = document.getElementById('t-copy');
+      const original = copyBtn.innerHTML;
+      copyBtn.innerHTML = '<i class="ti ti-check"></i>Copied';
+      setTimeout(()=>{ copyBtn.innerHTML = original; }, 1400);
+    });
+  }
+
+  renderStudent();
+  renderStaff();
+</script>
+</body>
+</html>
